@@ -41,3 +41,17 @@ it might be fun to use full blocks █ for redaction. But they might be annoying
 
 I'd like to be able to escape the pattern too. New pattern just uses a couple negative lookbehinds for this: `(?<!\\) [REDACTED] `
 
+---
+
+The pre-commit hook works beautifully!
+
+I'm having it take my symlinked Notes.md (ignored) and put the redacted output into NOTES.md (versioned).
+
+Since I've now updated these notes and would like to commit them (although I haven't changed any code in the repo yet) I can try `git commit --allow-empty`.
+
+That being said, I feel like the notes shouldn't be ignored, since it's annoying to need to do that allow-empty commit if you want to add note changes...
+
+Another way I could handle the files is by creating a temporary backup of the non-redacted notes, replacing the original with the redacted, adding the redacted, and then reverting to the backup.
+
+Only issue I see with this is figuring out how to handle `git pull`. But hey -- maybe it's time we figure that out!
+
