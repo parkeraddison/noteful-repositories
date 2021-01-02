@@ -55,3 +55,23 @@ Another way I could handle the files is by creating a temporary backup of the no
 
 Only issue I see with this is figuring out how to handle `git pull`. But hey -- maybe it's time we figure that out!
 
+In the mean time, the empty commit worked great.
+
+---
+
+## Public vs private notes
+
+Let's try working with NOTES.md as our main note file.
+
+Ideally I can keep an editor open on the file the whole time without any issue. Let's see.
+
+I feel very strongly about avoiding `-i` in-place -- I do **not** want to ever incidentally remove information.
+
+So far so good -- it seems I was able to temporary move (rename) the original file/symlink, then create the redacted version, add it, and then move the original back. Typora at least remained open the entire time and everything's still here!
+
+In this setting, because the repository will have the public-facing notes whereas the local filesystem has the private-facing notes, NOTES.md will *always* show as modified. Oh well. Seems fine to me.
+
+What happens if I **undo** a commit with `git reset HEAD~`?
+
+Seemed to be fine -- even though I had added some content to these notes it just kept it!
+

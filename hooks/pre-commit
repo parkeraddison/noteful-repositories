@@ -1,6 +1,7 @@
 #!/bin/sh
 
-# Run redaction on Notes.md and git-add the redacted file.
-perl -0 -pe 's/{~.*?~}/ [REDACTED] /gs' Notes.md > NOTES.md
-
+# Run redaction on our notes and git-add the redacted file.
+mv NOTES.md NOTES.md.old
+perl -0 -pe 's/{~.*?~}/ [REDACTED] /gs' NOTES.md.old > NOTES.md
 git add NOTES.md
+mv NOTES.md.old NOTES.md
