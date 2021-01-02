@@ -63,15 +63,28 @@ In the mean time, the empty commit worked great.
 
 Let's try working with NOTES.md as our main note file.
 
+### Committing
+
 Ideally I can keep an editor open on the file the whole time without any issue. Let's see.
 
 I feel very strongly about avoiding `-i` in-place -- I do **not** want to ever incidentally remove information.
 
 So far so good -- it seems I was able to temporary move (rename) the original file/symlink, then create the redacted version, add it, and then move the original back. Typora at least remained open the entire time and everything's still here!
 
-In this setting, because the repository will have the public-facing notes whereas the local filesystem has the private-facing notes, NOTES.md will *always* show as modified. Oh well. Seems fine to me.
+In this setting, because the repository will have the public-facing notes whereas the local filesystem has the private-facing notes, NOTES.md will *always* show as `modified`. Additionally, since I'm using a symlink to keep my notes elsewhere it always shows `typechange`. Oh well, doesn't really affect anything except for the satisfaction of an 'all up to date' status :upside_down_face: . Seems fine to me.
 
 What happens if I **undo** a commit with `git reset HEAD~`?
 
 Seemed to be fine -- even though I had added some content to these notes it just kept it!
 
+Yeah, honestly, things seem to be working really well!
+
+To test commit reset robustness, I'm writing this after committing, then I'll save, close my editor, reset, and re-open.
+
+Everything remains :)
+
+### Pulling
+
+Alright, time for the pull test! The following content should be redacted in the public repository because it is *very sensitive*:  [REDACTED] . That being said, it should remain in my private notes because it's *very important*!
+
+Let's see how git gets angry when I try to pull, and how I can possibly resolve this with a merge hook.
