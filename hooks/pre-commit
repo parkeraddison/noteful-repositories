@@ -1,7 +1,104 @@
 #!/bin/sh
 
-# Run redaction on our notes and git-add the redacted file.
-mv NOTES.md NOTES.md.old
-perl -0 -pe 's/{~.*?~}/ [REDACTED] /gs' NOTES.md.old > NOTES.md
-git add NOTES.md
-mv NOTES.md.old NOTES.md
+# Gameplan:
+#
+# 1. Make sure a private notes file exists.
+#    - It should be ignored, and for best practices it should be symlinked
+#      instead of residing in a such a volitile location
+# 2. Make sure the wiki for this repository is cloned into an ignored .wiki dir.
+# 3. Add the redacted notes to the wiki repo and push
+
+privatefile="Notes.md"
+wikidir=".wiki/"
+publicfilename="Notes.md"
+
+# Does it exist?
+if [ -f "$privatefile" ]; then
+    echo "Notes file found."
+else
+    echo "No notes file found! Searching for \`$privatefile\`"
+fi
+
+# Is it a symlink?
+if [ -h "$privatefile" ]; then
+    echo "Symlink confirmed."
+else
+    echo << EOF
+[WARNING] Yikes, \`$privatefile\` isn't symlinked. You should probably store the
+file in a safer directory and softlink it here.
+EOF
+fi
+
+# Check if the wiki repository already exists locally. If not present, we'll
+# need to clone it.
+if [ -d "$wikidir" ]; then
+    echo "Wiki repository found locally."
+else
+    # The wiki url is just the project url followed by .wiki (let's remove .git
+    # from the end if it's there)
+    baseurl=$(git config --get remote.origin.url)
+    wikiurl="${baseurl%.git}.wiki.git"
+    git clone "$wikiurl" "$wikidir"
+fi
+
+
+addfile=false
+adddir=false
+# Is our git-ignore properly configured?
+if [ -z $(git check-ignore "$privatefile") ]; then
+    echo "\
+Your private notes file should be excluded from direct version control. Adding
+this rule to \`.gitignore\`"
+    addfile=true
+fi
+if [ -z $(git check-ignore "$wikidir") ]; then
+# TODO: git check-ignore doesn't work on hidden files. Need to do a grep for
+# full line match instead.
+    echo "\
+The wiki repository should be excluded from direct version control. Adding this
+rule to \`.gitignore\`"
+    adddir=true
+fi
+
+if [ "$addfile" ] || [ "$adddir" ]; then
+    cat >> .gitignore << EOF
+# Added by noteful
+$([ "$addfile" = "true" ] && echo "/$privatefile")
+$([ "$addir" = "true" ] && echo "/$wikidir")
+EOF
+    echo "Git ignore propery configured."
+fi
+
+
+# # Check if there's already a wiki subtree. If not, we're going to need to
+# # initialize it.
+# #
+# # I can store a little dotfile so I don't need to parse the gitlogs each time.
+# if [ -f "$wikiexists" ]; then
+#     echo "Wiki subtree exists."
+# else
+#     # See: https://stackoverflow.com/questions/16641057/how-can-i-list-the-git-subtrees-on-the-root
+#     subtrees_log=$(git log | grep -n git-subtree-dir) | tr -d ' ' | cut -d ":" -f2 | sort | uniq | xargs -I {} bash -c 'if [ -d $(git rev-parse --show-toplevel)/{} ] ; then echo {}; fi')
+
+# alias list-subtrees=""
+# if [ -d "$wikidir" ] && [ "${list-subtrees#*$wikidir}" != "$wikidir" ]; then
+#     echo "Wiki subtree found."
+# else
+#     echo "Wiki subtree not found, adding wiki remote and pulling into subtree \
+#     at \`$wikidir\`"
+#     if [ $(git ) ]; then
+#     git remote add wiki https://github.com/user/repository.git
+    
+# fi
+
+
+# 1. Add wiki remote
+# 2. Add subtree (may need to stash and whatnot...)
+#
+# # ^ To make things easiest, the initialization should be on main with no changes
+
+
+# mv NOTES.md NOTES.md.old
+# perl -0 -pe 's/{~.*?~}/ [REDACTED] /gs' NOTES.md.old > NOTES.md
+# git add NOTES.md
+# mv NOTES.md.old NOTES.md
