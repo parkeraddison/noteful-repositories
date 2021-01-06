@@ -1,0 +1,89 @@
+#!/bin/sh
+
+# Gameplan:
+#
+# 1. Make sure a private notes file exists.
+#    - It should be ignored, and for best practices it should be symlinked
+#      instead of residing in a such a volitile location
+# 2. Make sure the wiki for this repository is cloned into an ignored .wiki dir.
+# 3. Add the redacted notes to the wiki repo and push
+
+privatefile="Notes.md"
+wikidir=".wiki/"
+publicfilename="Notes.md"
+
+# Does it exist?
+if [ -f "$privatefile" ]; then
+    echo "Notes file found."
+else
+    echo "No notes file found! Searching for \`$privatefile\`"
+fi
+
+# Is it a symlink?
+if [ -L "$privatefile" ]; then
+    echo "Symlink confirmed."
+else
+    echo "\
+[WARNING] Yikes, \`$privatefile\` isn't symlinked. You should probably store the
+file in a safer directory and softlink it here."
+fi
+
+# Check if the wiki repository already exists locally. If not present, we'll
+# need to clone it.
+if [ -d "$wikidir" ]; then
+    echo "Wiki repository found locally. Rebasing to avoid conflicts."
+    cd "$wikidir" && \
+        git pull --rebase ; \
+        cd -
+else
+    # The wiki url is just the project url followed by .wiki (let's remove .git
+    # from the end if it's there)
+    baseurl=$(git config --get remote.origin.url)
+    wikiurl="${baseurl%.git}.wiki.git"
+    git clone "$wikiurl" "$wikidir"
+fi
+
+addfile=false
+adddir=false
+# Is our git-ignore properly configured?
+if [ ! $(git check-ignore "$privatefile") ]; then
+    echo "\
+Your private notes file should be excluded from direct version control. Adding
+this rule to \`.gitignore\`"
+    addfile=true
+fi
+# git check-ignore doesn't work on hidden files. Need to do a grep for full line
+# match instead.
+if [ -f ".gitignore" ]; then
+    dirignored=$(grep "^/$wikidir$" ".gitignore")
+    if [ -z "$dirignored" ]; then
+        echo "\
+The wiki repository should be excluded from direct version control. Adding this
+rule to \`.gitignore\`"
+        adddir=true
+    fi
+else
+    adddir=true
+fi
+
+if [ "$addfile" = true ] || [ "$adddir" = true ]; then
+    echo "# Added by noteful" >> .gitignore
+fi; if [ "$addfile" = true ]; then
+    echo "/$privatefile" >> .gitignore
+fi; if [ "$adddir" = true ]; then
+    echo "/$wikidir" >> .gitignore
+fi 
+echo "Git ignore propery configured."
+
+# Finally, add the redacted notes to the wiki repo then commit and push there
+# with the same message as this commit.
+#
+# For explanation of this command, see Notes!
+perl -0 -pe 's/{~.*?~}/REDACTED/gs' "$privatefile" > "$wikidir$publicfilename"
+
+commitmsg=$(git log -n 1 --pretty=%s)
+cd "$wikidir" && \
+    git add -f "$publicfilename" && \
+    git commit -m "$commitmsg" && \
+    git push -u origin $(git branch --show-current) ; \
+    cd -
