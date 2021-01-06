@@ -1,12 +1,26 @@
 #!/bin/sh
 
+# pre-commit
+# ==========
+#
+# The pre-commit hook makes sure that the structure of the repository and wiki
+# is proper.
+#
+# This involves making sure files/directories exist, and making sure they're
+# symlinked and/or ignored.
+#
+# Future work may involve prompting the user to better define this structure,
+# e.g. providing file names and creating files for the user. And making sure the
+# user isn't committing their private notes.
+
+echo ">>> [HOOK] pre-commit: Start"
+
 # Gameplan:
 #
 # 1. Make sure a private notes file exists.
 #    - It should be ignored, and for best practices it should be symlinked
 #      instead of residing in a such a volitile location
 # 2. Make sure the wiki for this repository is cloned into an ignored .wiki dir.
-# 3. Add the redacted notes to the wiki repo and push
 
 privatefile="Notes.md"
 wikidir=".wiki/"
@@ -44,6 +58,7 @@ else
 fi
 
 addfile=false
+addbak=false
 adddir=false
 # Is our git-ignore properly configured?
 if [ ! $(git check-ignore "$privatefile") ]; then
@@ -55,6 +70,10 @@ fi
 # git check-ignore doesn't work on hidden files. Need to do a grep for full line
 # match instead.
 if [ -f ".gitignore" ]; then
+    bakignored=$(grep "/.$privatefile.bak$" ".gitignore")
+    if [ -z "$bakignored" ]; then
+        addbak=true
+    fi
     dirignored=$(grep "^/$wikidir$" ".gitignore")
     if [ -z "$dirignored" ]; then
         echo "\
@@ -64,26 +83,18 @@ rule to \`.gitignore\`"
     fi
 else
     adddir=true
+    addbak=true
 fi
 
-if [ "$addfile" = true ] || [ "$adddir" = true ]; then
+if [ "$addfile" = true ] || [ "$addbak" = true] || [ "$adddir" = true ]; then
     echo "# Added by noteful" >> .gitignore
 fi; if [ "$addfile" = true ]; then
     echo "/$privatefile" >> .gitignore
+fi; if [ "$addbak" = true ]; then
+    echo "/.$privatefile.bak" >> .gitignore
 fi; if [ "$adddir" = true ]; then
     echo "/$wikidir" >> .gitignore
 fi 
 echo "Git ignore propery configured."
 
-# Finally, add the redacted notes to the wiki repo then commit and push there
-# with the same message as this commit.
-#
-# For explanation of this command, see Notes!
-perl -0 -pe 's/{~.*?~}/REDACTED/gs' "$privatefile" > "$wikidir$publicfilename"
-
-branch=$(git branch --show-current)
-commitmsg=$(cat $1)
-cd "$wikidir" && \
-    git add -f "$publicfilename" && \
-    git commit -m "($branch) $commitmsg" ; \
-    cd -
+echo "<<< [HOOK] pre-commit: End"

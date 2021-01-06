@@ -1,8 +1,18 @@
 #!/bin/sh
 
+# pre-push
+# ========
+#
+# The pre-push hook simply pushes the commits to the wiki whenever a push to the
+# repository is made.
+
+echo ">>> [HOOK] pre-push: Start"
+
 # It's time to push the wiki commits!
 wikidir=".wiki/"
 
 cd "$wikidir" && \
     git push -u origin $(git branch --show-current) ; \
     cd -
+
+echo "<<< [HOOK] pre-push: End"

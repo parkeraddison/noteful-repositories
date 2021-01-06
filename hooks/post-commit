@@ -1,0 +1,37 @@
+#!/bin/sh
+
+# post-commit
+# ===========
+#
+# The post-commit hook adds a reference to the commit in the notes, then finally
+# creates a redacted copy of the notes and commits it to the wiki.
+
+echo ">>> [HOOK] post-commit: Start"
+
+# TODO: Variables should really be synced up between the hooks.
+privatefile="Notes.md"
+wikidir=".wiki/"
+publicfilename="Notes.md"
+
+# Add most recent commit hash and message to the notes
+repourl=$(git config --get remote.origin.url | sed -e 's+:+/+g'| sed -e 's,git@,https://,g' | sed -e 's,/$,,' | sed -e 's,.git$,,')
+reference=$(git log -1 --pretty="Commit: [%h]($repourl/commit/%H) %D | %s | %as")
+
+echo "Adding commit reference to private notes. Storing backup of notes at .$privatefile.bak"
+cp "$privatefile" ".$privatefile.bak"
+echo "$reference" >> "$privatefile"
+
+# Finally, add the redacted notes to the wiki repo then commit and push there
+# with the same message as this commit.
+#
+# For explanation of this command, see Notes!
+perl -0 -pe 's/{~.*?~}/REDACTED/gs' "$privatefile" > "$wikidir$publicfilename"
+
+branch=$(git branch --show-current)
+commitmsg=$(git log -1 --pretty='%s')
+cd "$wikidir" && \
+    git add -f "$publicfilename" && \
+    git commit -m "($branch) $commitmsg" ; \
+    cd -
+
+echo "<<< [HOOK] post-commit: End"

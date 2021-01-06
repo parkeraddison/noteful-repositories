@@ -28,7 +28,11 @@ You're done! Now every time you make a commit, a redacted version of your notes 
 
 ## How it works
 
-A commit-msg hook is used to verify the structural setup of the notes and wiki, then to commit a redacted copy of your notes to the wiki each time you make a commit.
+Git hooks are scripts that execute at certain stages along the add-commit-push process.
+
+A pre-commit hook is used to verify the structural setup of the notes and wiki.
+
+A post-commit hook is used to add a reference to the commit in your notes for easier searching, and to commit a redacted copy of your notes to the wiki.
 
 A pre-push hook is used to push to the wiki each time you push your repository.
 
