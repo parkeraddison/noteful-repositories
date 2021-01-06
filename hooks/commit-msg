@@ -81,9 +81,9 @@ echo "Git ignore propery configured."
 # For explanation of this command, see Notes!
 perl -0 -pe 's/{~.*?~}/REDACTED/gs' "$privatefile" > "$wikidir$publicfilename"
 
-commitmsg=$(git log -n 1 --pretty=%s)
+branch=$(git branch --show-current)
+commitmsg=$(cat $1)
 cd "$wikidir" && \
     git add -f "$publicfilename" && \
-    git commit -m "$commitmsg" && \
-    git push -u origin $(git branch --show-current) ; \
+    git commit -m "($branch) $commitmsg" ; \
     cd -
