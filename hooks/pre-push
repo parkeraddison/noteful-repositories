@@ -11,6 +11,6 @@ echo ">>> [HOOK] pre-push: Start"
 # It's time to push the wiki commits!
 wikidir=".wiki/"
 
-env -i git -C "$wikidir" push -u origin $(git branch --show-current)
+git -C "$wikidir" push -u origin $(git -C "$wikidir" branch --show-current)
 
 echo "<<< [HOOK] pre-push: End"

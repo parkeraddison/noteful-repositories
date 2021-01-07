@@ -15,7 +15,6 @@ publicfilename="Notes.md"
 
 # Add most recent commit hash and message to the notes
 repourl=$(git config --get remote.origin.url | sed -e 's+:+/+g'| sed -e 's,git@,https://,g' | sed -e 's,/$,,' | sed -e 's,.git$,,')
-reference=$(git log -1 --pretty="Commit: [%h]($repourl/commit/%H) %D | %s | %as")
 commithash=$(git log -1 --pretty='%H')
 commitshort=$(git log -1 --pretty='%h')
 
@@ -26,25 +25,17 @@ cp "$privatefile" ".$privatefile.bak"
 
 # Print # followed by a zero-width string determined by the sequence {1..$var}
 hashlink="[$commitshort]($repourl/commit/$commithash)"
-message=$(git log -1 --pretty='Commit: %as | %D | %s')
+message=$(git log -1 --pretty='"%s" | %D | %as')
 headinglevel=6
 if [ "$(tail -1 "$privatefile")" = '' ]; then
-    echo "Ends in newline."
     nl=""
 else
     nl="
 "
 fi
 cat >> "$privatefile" << EOF
-$nl$(for i in $(seq 1 $headinglevel); do printf '#'; done) $hashlink
-$message
-
-EOF
-
-cat >> "$privatefile" << EOF
-
-$commithash
-
+$nl> $(for i in $(seq 1 $headinglevel); do printf '#'; done) $hashlink
+> $message
 EOF
 
 # Finally, add the redacted notes to the wiki repo then commit and push there
