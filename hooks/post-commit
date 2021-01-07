@@ -16,22 +16,45 @@ publicfilename="Notes.md"
 # Add most recent commit hash and message to the notes
 repourl=$(git config --get remote.origin.url | sed -e 's+:+/+g'| sed -e 's,git@,https://,g' | sed -e 's,/$,,' | sed -e 's,.git$,,')
 reference=$(git log -1 --pretty="Commit: [%h]($repourl/commit/%H) %D | %s | %as")
+commithash=$(git log -1 --pretty='%H')
+commitshort=$(git log -1 --pretty='%h')
 
-echo "Adding commit reference to private notes. Storing backup of notes at .$privatefile.bak"
+echo "\
+Adding commit reference to private notes. A backup of the notes are stored at
+\`.$privatefile.bak\` in the event of any ill effects."
 cp "$privatefile" ".$privatefile.bak"
-echo "$reference" >> "$privatefile"
+
+# Print # followed by a zero-width string determined by the sequence {1..$var}
+hashlink="[$commitshort]($repourl/commit/$commithash)"
+message=$(git log -1 --pretty='Commit: %as | %D | %s')
+headinglevel=6
+if [ "$(tail -1 "$privatefile")" = '' ]; then
+    echo "Ends in newline."
+    nl=""
+else
+    nl="$(printf '\n')"
+fi
+cat >> "$privatefile" << EOF
+$nl$(for i in $(seq 1 $headinglevel); do printf '#'; done) $hashlink
+$message
+
+EOF
+
+cat >> "$privatefile" << EOF
+
+$commithash
+
+EOF
 
 # Finally, add the redacted notes to the wiki repo then commit and push there
 # with the same message as this commit.
 #
 # For explanation of this command, see Notes!
-perl -0 -pe 's/{~.*?~}/REDACTED/gs' "$privatefile" > "$wikidir$publicfilename"
+perl -0 -pe 's/(?<!\\){~.*?(?<!\\)~}/REDACTED/gs' "$privatefile" > "$wikidir$publicfilename"
 
 branch=$(git branch --show-current)
 commitmsg=$(git log -1 --pretty='%s')
-cd "$wikidir" && \
-    git add -f "$publicfilename" && \
-    git commit -m "($branch) $commitmsg" ; \
-    cd -
+env -i git -C "$wikidir" add -f "$publicfilename" && \
+    env -i git -C "$wikidir" commit -m "($branch) $commitmsg"
 
 echo "<<< [HOOK] post-commit: End"

@@ -1,4 +1,6 @@
 #!/bin/sh
+# set -x
+# exit=true
 
 # pre-commit
 # ==========
@@ -44,11 +46,12 @@ fi
 
 # Check if the wiki repository already exists locally. If not present, we'll
 # need to clone it.
+#
+# NOTE: `env -i` must be used to avoid the environment variables used in hooks
+# from interfering with git commands we want to run in other directories.
 if [ -d "$wikidir" ]; then
     echo "Wiki repository found locally. Rebasing to avoid conflicts."
-    cd "$wikidir" && \
-        git pull --rebase ; \
-        cd -
+    env -i git -C "$wikidir" pull --rebase
 else
     # The wiki url is just the project url followed by .wiki (let's remove .git
     # from the end if it's there)
@@ -86,7 +89,9 @@ else
     addbak=true
 fi
 
-if [ "$addfile" = true ] || [ "$addbak" = true] || [ "$adddir" = true ]; then
+
+
+if [ "$addfile" = true ] || [ "$addbak" = true ] || [ "$adddir" = true ]; then
     echo "# Added by noteful" >> .gitignore
 fi; if [ "$addfile" = true ]; then
     echo "/$privatefile" >> .gitignore
@@ -94,7 +99,13 @@ fi; if [ "$addbak" = true ]; then
     echo "/.$privatefile.bak" >> .gitignore
 fi; if [ "$adddir" = true ]; then
     echo "/$wikidir" >> .gitignore
+fi; if [ "$addfile" = true ] || [ "$addbak" = true ] || [ "$adddir" = true ]; then
+    git add .gitignore
 fi 
 echo "Git ignore propery configured."
 
 echo "<<< [HOOK] pre-commit: End"
+
+if [ "$exit" = true ]; then
+    exit 1
+fi
