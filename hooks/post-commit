@@ -32,7 +32,8 @@ if [ "$(tail -1 "$privatefile")" = '' ]; then
     echo "Ends in newline."
     nl=""
 else
-    nl="$(printf '\n')"
+    nl="
+"
 fi
 cat >> "$privatefile" << EOF
 $nl$(for i in $(seq 1 $headinglevel); do printf '#'; done) $hashlink
@@ -54,7 +55,7 @@ perl -0 -pe 's/(?<!\\){~.*?(?<!\\)~}/REDACTED/gs' "$privatefile" > "$wikidir$pub
 
 branch=$(git branch --show-current)
 commitmsg=$(git log -1 --pretty='%s')
-env -i git -C "$wikidir" add -f "$publicfilename" && \
-    env -i git -C "$wikidir" commit -m "($branch) $commitmsg"
+git -C "$wikidir" add -f "$publicfilename" && \
+    git -C "$wikidir" commit -m "($branch) $commitmsg"
 
 echo "<<< [HOOK] post-commit: End"

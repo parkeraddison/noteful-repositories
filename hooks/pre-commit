@@ -50,7 +50,8 @@ fi
 # NOTE: `env -i` must be used to avoid the environment variables used in hooks
 # from interfering with git commands we want to run in other directories.
 if [ -d "$wikidir" ]; then
-    echo "Wiki repository found locally. Rebasing to avoid conflicts."
+    echo "Wiki repository found locally. Rebasing to current remote state."
+    env -i git -C "$wikidir" reset --hard
     env -i git -C "$wikidir" pull --rebase
 else
     # The wiki url is just the project url followed by .wiki (let's remove .git
